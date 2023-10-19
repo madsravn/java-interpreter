@@ -154,14 +154,49 @@ public class ParserTest {
             PrefixExpression prefixExpression = (PrefixExpression) statement.getExpression();
             assertEquals(prefixExpression.getOperator(), prefixData.operator);
 
-            // testIntegerLiteral method for later
+            // TODO: testIntegerLiteral method for later
             assertTrue(prefixExpression.getRight() instanceof IntegerLiteral);
             IntegerLiteral integerLiteral = (IntegerLiteral) prefixExpression.getRight();
 
             assertEquals(integerLiteral.getValue(), prefixData.integerValue);
             assertEquals(integerLiteral.tokenLiteral(), "" + prefixData.integerValue);
+        }
+    }
 
+    private class OperatorPrecedenceParsing {
+        public String input;
+        public String expected;
+        public OperatorPrecedenceParsing(String input, String expected) {
+            this.input = input;
+            this.expected = expected;
+        }
+    }
 
+    @Test
+    public void testOperatorPrecedenceParsing() {
+        List<OperatorPrecedenceParsing> operatorPrecedenceParsingList = Arrays.asList(
+                new OperatorPrecedenceParsing("-a * b", "((-a) * b)"),
+                new OperatorPrecedenceParsing("!-a", "(!(-a))"),
+                new OperatorPrecedenceParsing("a + b + c", "((a + b) + c)"),
+                new OperatorPrecedenceParsing("a + b - c", "((a + b) - c)"),
+                new OperatorPrecedenceParsing("a * b * c", "((a * b) * c)"),
+                new OperatorPrecedenceParsing("a * b / c", "((a * b) / c)"),
+                new OperatorPrecedenceParsing("a + b / c", "(a + (b / c))"),
+                new OperatorPrecedenceParsing("a + b * c + d / e - f", "(((a + (b * c)) + (d / e)) - f)"),
+                new OperatorPrecedenceParsing("3 + 4; -5 * 5", "(3 + 4)((-5) * 5)"),
+                new OperatorPrecedenceParsing("5 < 4 == 3 < 4", "((5 < 4) == (3 < 4))"),
+                new OperatorPrecedenceParsing("5 > 4 != 3 > 4", "((5 > 4) != (3 > 4))"),
+                new OperatorPrecedenceParsing("3 + 4 * 5 == 3 * 1 + 4 * 5", "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))")
+        );
+
+        for (OperatorPrecedenceParsing operatorPrecedenceParsing : operatorPrecedenceParsingList) {
+            String input = operatorPrecedenceParsing.input;
+            Lexer lexer = new Lexer(input);
+            Parser parser = new Parser(lexer);
+            Program program = parser.parseProgram();
+            checkForParseErrors(parser);
+
+            assertEquals(program.string(), operatorPrecedenceParsing.expected);
         }
     }
 
