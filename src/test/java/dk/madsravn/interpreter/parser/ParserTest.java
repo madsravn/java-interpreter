@@ -4,6 +4,9 @@ import dk.madsravn.interpreter.ast.*;
 import dk.madsravn.interpreter.lexer.Lexer;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ParserTest {
@@ -122,6 +125,44 @@ public class ParserTest {
         IntegerLiteral integerLiteral = (IntegerLiteral)expression;
         assertEquals(integerLiteral.getValue(), 5);
         assertEquals(integerLiteral.tokenLiteral(), "5");
+    }
+
+    private class PrefixData {
+        public String input;
+        public String operator;
+        public int integerValue;
+        public PrefixData(String input, String operator, int integerValue) {
+            this.input = input;
+            this.operator = operator;
+            this.integerValue = integerValue;
+        }
+    }
+
+    @Test
+    public void testParsingPrefixExpression() {
+        List<PrefixData> inputs = Arrays.asList(new PrefixData("!5;", "!", 5), new PrefixData("-15;", "-", 15));
+        for(PrefixData prefixData : inputs) {
+            Lexer lexer = new Lexer(prefixData.input);
+            Parser parser = new Parser(lexer);
+            Program program = parser.parseProgram();
+            checkForParseErrors(parser);
+
+            assertEquals(program.getStatementsLength(), 1);
+            assertTrue(program.getStatements().get(0) instanceof ExpressionStatement);
+            ExpressionStatement statement = (ExpressionStatement) program.getStatements().get(0);
+            assertTrue(statement.getExpression() instanceof PrefixExpression);
+            PrefixExpression prefixExpression = (PrefixExpression) statement.getExpression();
+            assertEquals(prefixExpression.getOperator(), prefixData.operator);
+
+            // testIntegerLiteral method for later
+            assertTrue(prefixExpression.getRight() instanceof IntegerLiteral);
+            IntegerLiteral integerLiteral = (IntegerLiteral) prefixExpression.getRight();
+
+            assertEquals(integerLiteral.getValue(), prefixData.integerValue);
+            assertEquals(integerLiteral.tokenLiteral(), "" + prefixData.integerValue);
+
+
+        }
     }
 
     private void checkForParseErrors(Parser parser) {

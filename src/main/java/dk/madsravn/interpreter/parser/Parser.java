@@ -61,16 +61,29 @@ public class Parser {
         return new Identifier(currentToken, currentToken.getLiteral());
     }
 
+    private IExpression parsePrefixExpression() {
+        Token t = currentToken;
+        nextToken();
+        IExpression right = parseExpression(PrecedenceEnum.PREFIX);
+        return new PrefixExpression(t, t.getLiteral(), right);
+    }
+
     private IExpression parseExpression(PrecedenceEnum precedence) {
         switch(currentToken.getType()) {
             case IDENT:
                 return parseIdentifier();
             case INT:
                 return parseIntegerLiteral();
+            case BANG, MINUS:
+                return parsePrefixExpression();
             default:
                 // TODO: This is ugly
                 return null;
         }
+    }
+
+    private void noPrefixParseFunctionError(TokenType tokenType) {
+        errors.add("No prefix parse function found for " + tokenType);
     }
 
     private IntegerLiteral parseIntegerLiteral() {
