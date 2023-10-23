@@ -15,6 +15,18 @@ public class InfixExpression implements IExpression{
         this.right = right;
     }
 
+    public String getOperator(){
+        return operator;
+    }
+
+    public IExpression getRight() {
+        return right;
+    }
+
+    public IExpression getLeft() {
+        return left;
+    }
+
     @Override
     public void expressionNode() {}
 

@@ -78,12 +78,24 @@ public class Parser {
                 return parseIntegerLiteral();
             case BANG, MINUS:
                 return parsePrefixExpression();
+            case TRUE, FALSE:
+                return parseBoolean();
+            case LPAREN:
+                return parseGroupedExpression();
             default:
-                // TODO: Add tests for these
-                //noPrefixParseFunctionError(currentToken.getType());
+                noPrefixParseFunctionError(currentToken.getType());
                 // TODO: This is ugly
                 return null;
         }
+    }
+
+    private IExpression parseGroupedExpression() {
+        nextToken();
+        IExpression expression = parseExpression(LOWEST);
+        if (!expectPeekType(RPAREN)) {
+            return null;
+        }
+        return expression;
     }
 
     private IExpression parseExpression(PrecedenceEnum precedence) {
@@ -148,7 +160,9 @@ public class Parser {
         return new InfixExpression(token, left, token.getLiteral(), right);
     }
 
-
+    private BooleanType parseBoolean() {
+        return new BooleanType(currentToken, currentTokenType(TokenType.TRUE));
+    }
 
     private void noPrefixParseFunctionError(TokenType tokenType) {
         errors.add("No prefix parse function found for " + tokenType);
