@@ -5,6 +5,7 @@ import dk.madsravn.interpreter.lexer.Lexer;
 import dk.madsravn.interpreter.tokens.Token;
 import dk.madsravn.interpreter.tokens.TokenType;
 
+import java.sql.Array;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -82,11 +83,81 @@ public class Parser {
                 return parseBoolean();
             case LPAREN:
                 return parseGroupedExpression();
+            case IF:
+                return parseIfExpression();
+            case FUNCTION:
+                return parseFunctionLiteral();
             default:
                 noPrefixParseFunctionError(currentToken.getType());
                 // TODO: This is ugly
                 return null;
         }
+    }
+
+    private IExpression parseCallExpression(IExpression function) {
+        CallExpression callExpression = new CallExpression(currentToken, function, parseCallArguments());
+        return callExpression;
+    }
+
+    private List<IExpression> parseCallArguments() {
+        List<IExpression> callArguments = new ArrayList<IExpression>();
+        if (peekTokenType(RPAREN)) {
+            nextToken();
+            return callArguments;
+        }
+        nextToken();
+        callArguments.add(parseExpression(LOWEST));
+
+        while(peekTokenType(COMMA)) {
+            nextToken();
+            nextToken();
+            callArguments.add(parseExpression(LOWEST));
+        }
+        if (!expectPeekType(RPAREN)) {
+            return null;
+        }
+
+        return callArguments;
+    }
+
+    private IExpression parseFunctionLiteral() {
+        Token token = currentToken;
+        if(!expectPeekType(LPAREN)) {
+            return null;
+        }
+        List<Identifier> parameters = parseFunctionParameters();
+        if(!expectPeekType(LBRACE)) {
+            return null;
+        }
+        BlockStatement body = parseBlockStatement();
+        return new FunctionLiteral(token, parameters, body);
+    }
+
+    private List<Identifier> parseFunctionParameters() {
+        List<Identifier> parameters = new ArrayList<Identifier>();
+
+        if(peekTokenType(RPAREN)) {
+            nextToken();
+            return parameters;
+        }
+
+        nextToken();
+
+        Identifier identifier = new Identifier(currentToken, currentToken.getLiteral());
+        parameters.add(identifier);
+
+        while(peekTokenType(COMMA)) {
+            nextToken();
+            nextToken();
+            identifier = new Identifier(currentToken, currentToken.getLiteral());
+            parameters.add(identifier);
+        }
+
+        if (!expectPeekType(RPAREN)) {
+            return null;
+        }
+
+        return parameters;
     }
 
     private IExpression parseGroupedExpression() {
@@ -96,6 +167,56 @@ public class Parser {
             return null;
         }
         return expression;
+    }
+
+    private IExpression parseIfExpression() {
+        Token token = currentToken;
+        if (!expectPeekType(LPAREN)) {
+            return null;
+        }
+
+        nextToken();
+        IExpression condition = parseExpression(LOWEST);
+
+        if (!expectPeekType(RPAREN)) {
+            return null;
+        }
+
+        if (!expectPeekType(LBRACE)) {
+            return null;
+        }
+        BlockStatement consequence = parseBlockStatement();
+        BlockStatement alternative = parseAlternativeBlock();
+
+        IfExpression ifExpression = new IfExpression(token, condition, consequence, alternative);
+        return  ifExpression;
+    }
+
+    private BlockStatement parseAlternativeBlock() {
+        if (peekTokenType(ELSE)) {
+            nextToken();
+            if (!expectPeekType(LBRACE)) {
+                return null;
+            }
+            return parseBlockStatement();
+        }
+        return null;
+    }
+
+    private BlockStatement parseBlockStatement() {
+        Token token = currentToken;
+        List<IStatement> statements = new ArrayList<IStatement>();
+
+        nextToken();
+
+        while (!currentTokenType(RBRACE) && !currentTokenType(TokenType.EOF)) {
+            IStatement statement = parseStatement();
+            if (statement != null) {
+                statements.add(statement);
+            }
+            nextToken();
+        }
+        return new BlockStatement(token, statements);
     }
 
     private IExpression parseExpression(PrecedenceEnum precedence) {
@@ -120,6 +241,8 @@ public class Parser {
 
     private PrecedenceEnum getPrecedence(TokenType type) {
         switch (type) {
+            case LPAREN:
+                return CALL;
             case EQ, NOT_EQ:
                 return EQUALS;
             case LT, GT:

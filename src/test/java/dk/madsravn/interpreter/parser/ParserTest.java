@@ -363,7 +363,193 @@ public class ParserTest {
         }
     }
 
+    public void testIdentifier(IExpression expression, String value) {
+        assertTrue(expression instanceof Identifier);
+        Identifier identifier = (Identifier) expression;
+        assertEquals(identifier.getValue(), value);
+        assertEquals(identifier.tokenLiteral(), value);
+    }
+
+    @Test
+    public void testIfExpression() {
+        String input = "if (x < y) { x }";
+        Lexer lexer = new Lexer(input);
+        Parser parser = new Parser(lexer);
+        Program program = parser.parseProgram();
+        checkForParseErrors(parser, input);
+
+        assertEquals(program.getStatementsLength(), 1);
+        assertTrue(program.getStatements().get(0) instanceof ExpressionStatement);
+        ExpressionStatement expressionStatement = (ExpressionStatement) program.getStatements().get(0);
+
+        assertTrue(expressionStatement.getExpression() instanceof IfExpression);
+        IfExpression ifExpression = (IfExpression) expressionStatement.getExpression();
+
+        assertTrue(ifExpression.getCondition() instanceof InfixExpression);
+        InfixExpression infixExpression = (InfixExpression) ifExpression.getCondition();
+        assertEquals(infixExpression.getOperator(), "<");
+
+        testIdentifier(infixExpression.getLeft(), "x");
+        testIdentifier(infixExpression.getRight(), "y");
+
+        assertEquals(ifExpression.getConsequence().getStatementsLength(), 1);
+        assertTrue(ifExpression.getConsequence().getStatements().get(0) instanceof ExpressionStatement);
+        ExpressionStatement consequence = (ExpressionStatement) ifExpression.getConsequence().getStatements().get(0);
+        testIdentifier(consequence.getExpression(), "x");
+        assertNull(ifExpression.getAlternative());
+
+    }
+
+    public void testIfElseExpression() {
+        String input = "if (x < y) { x } else { y }";
+        Lexer lexer = new Lexer(input);
+        Parser parser = new Parser(lexer);
+        Program program = parser.parseProgram();
+        checkForParseErrors(parser, input);
+
+        assertEquals(program.getStatementsLength(), 1);
+        assertTrue(program.getStatements().get(0) instanceof ExpressionStatement);
+        ExpressionStatement expressionStatement = (ExpressionStatement) program.getStatements().get(0);
+
+        assertTrue(expressionStatement.getExpression() instanceof IfExpression);
+        IfExpression ifExpression = (IfExpression) expressionStatement.getExpression();
+
+        assertTrue(ifExpression.getCondition() instanceof InfixExpression);
+        InfixExpression infixExpression = (InfixExpression) ifExpression.getCondition();
+        assertEquals(infixExpression.getOperator(), "<");
+
+        testIdentifier(infixExpression.getLeft(), "x");
+        testIdentifier(infixExpression.getRight(), "y");
+
+        assertEquals(ifExpression.getConsequence().getStatementsLength(), 1);
+        assertTrue(ifExpression.getConsequence().getStatements().get(0) instanceof ExpressionStatement);
+        ExpressionStatement consequence = (ExpressionStatement) ifExpression.getConsequence().getStatements().get(0);
+        testIdentifier(consequence.getExpression(), "x");
+
+        assertEquals(ifExpression.getAlternative().getStatementsLength(), 1);
+        assertTrue(ifExpression.getAlternative().getStatements().get(0) instanceof ExpressionStatement);
+        ExpressionStatement alternative = (ExpressionStatement) ifExpression.getAlternative().getStatements().get(0);
+        testIdentifier(alternative.getExpression(), "y");
+    }
+
+    @Test
+    public void testFuntionLiteralParsing() {
+        String input = "fn(x, y) { x + y; }";
+        Lexer lexer = new Lexer(input);
+        Parser parser = new Parser(lexer);
+        Program program = parser.parseProgram();
+        checkForParseErrors(parser, input);
+
+        assertEquals(program.getStatementsLength(), 1);
+        assertTrue(program.getStatements().get(0) instanceof ExpressionStatement);
+
+        ExpressionStatement expressionStatement = (ExpressionStatement) program.getStatements().get(0);
+        assertTrue(expressionStatement.getExpression() instanceof FunctionLiteral);
+
+        FunctionLiteral functionLiteral = (FunctionLiteral) expressionStatement.getExpression();
+        assertEquals(functionLiteral.getParametersLength(), 2);
+
+        testIdentifier(functionLiteral.getParameters().get(0), "x");
+        testIdentifier(functionLiteral.getParameters().get(1), "y");
+
+        assertEquals(functionLiteral.getBody().getStatementsLength(), 1);
+
+        assertTrue(functionLiteral.getBody().getStatements().get(0) instanceof ExpressionStatement);
+        ExpressionStatement bodyStatement = (ExpressionStatement) functionLiteral.getBody().getStatements().get(0);
+
+        assertTrue(bodyStatement.getExpression() instanceof InfixExpression);
+        InfixExpression infixExpression = (InfixExpression) bodyStatement.getExpression();
+        testIdentifier(infixExpression.getLeft(), "x");
+        testIdentifier(infixExpression.getRight(), "y");
+        assertEquals(infixExpression.getOperator(), "+");
+    }
+
+    private class FunctionParameterData {
+        public String input;
+        public List<String> parameters;
+        public FunctionParameterData(String input, List<String> parameters) {
+            this.input = input;
+            this.parameters = parameters;
+        }
+    }
+
+    @Test
+    public void testFuntionParameterParsing() {
+        List<FunctionParameterData> inputs = Arrays.asList(
+                new FunctionParameterData("fn() {};", Arrays.asList()),
+                new FunctionParameterData("fn(x) {};", Arrays.asList("x")),
+                new FunctionParameterData("fn(x, y) {};", Arrays.asList("x", "y")),
+                new FunctionParameterData("fn(x, y, z) {};", Arrays.asList("x", "y", "z"))
+        );
+
+        for(FunctionParameterData input : inputs) {
+            Lexer lexer = new Lexer(input.input);
+            Parser parser = new Parser(lexer);
+            Program program = parser.parseProgram();
+            checkForParseErrors(parser, input.input);
+
+            assertEquals(program.getStatementsLength(), 1);
+            assertTrue(program.getStatements().get(0) instanceof ExpressionStatement);
+            ExpressionStatement expressionStatement = (ExpressionStatement) program.getStatements().get(0);
+
+            assertTrue(expressionStatement.getExpression() instanceof FunctionLiteral);
+            FunctionLiteral functionLiteral = (FunctionLiteral) expressionStatement.getExpression();
+
+            assertEquals(functionLiteral.getParametersLength(), input.parameters.size());
+            for(int i = 0; i < input.parameters.size(); i++) {
+                testIdentifier(functionLiteral.getParameters().get(i), input.parameters.get(i));
+            }
+        }
+    }
+
+    @Test
+    public void testCallExpressionParsing() {
+        String input = "add(1, 2 * 3, 4 + 5);";
+        Lexer lexer = new Lexer(input);
+        Parser parser = new Parser(lexer);
+        Program program = parser.parseProgram();
+        checkForParseErrors(parser, input);
+
+        assertEquals(program.getStatementsLength(), 1);
+        assertTrue(program.getStatements().get(0) instanceof ExpressionStatement);
+        ExpressionStatement expressionStatement = (ExpressionStatement) program.getStatements().get(0);
+        assertTrue(expressionStatement.getExpression() instanceof CallExpression);
+        CallExpression callExpression = (CallExpression) expressionStatement.getExpression();
+
+        testIdentifier(callExpression.getFunction(), "add");
+        assertEquals(callExpression.getArguments().size(), 3);
+
+        testIntegerLiteral(callExpression.getArguments().get(0), 1);
+        testIntegerInfixExpression(callExpression.getArguments().get(1), 2, "*", 3);
+        testIntegerInfixExpression(callExpression.getArguments().get(2), 4, "+", 5);
+
+    }
+
+    public void testIntegerInfixExpression(IExpression expression, int left, String operator, int right) {
+        assertTrue(expression instanceof InfixExpression);
+        InfixExpression infixExpression = (InfixExpression) expression;
+        testIntegerLiteral(infixExpression.getLeft(), left);
+        testIntegerLiteral(infixExpression.getRight(), right);
+        assertEquals(infixExpression.getOperator(), operator);
+    }
+
+    public void testIntegerLiteral(IExpression expression, int value) {
+        assertTrue(expression instanceof IntegerLiteral);
+        IntegerLiteral integerLiteral = (IntegerLiteral) expression;
+        assertEquals(integerLiteral.getValue(), value);
+        assertEquals(integerLiteral.tokenLiteral(), "" + value);
+    }
+
     private void checkForParseErrors(Parser parser, String input) {
-        assertEquals(parser.getErrors().size(), 0, "Input [" + input + "] should not gives errors. There should not be any errors: " + parser.getErrors());
+        assertEquals(parser.getErrors().size(), 0, "Input [" + input + "] should not gives errors. There should not be any errors: " + formatErrors(parser.getErrors()));
+    }
+
+    private String formatErrors(List<String> errors) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("\n");
+        for ( String error : errors) {
+            sb.append(error + "\n");
+        }
+        return sb.toString();
     }
 }
