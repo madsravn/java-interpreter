@@ -28,7 +28,7 @@ public class CallExpression implements IExpression {
 
     public String string() {
         StringBuilder sb = new StringBuilder();
-        String argumentString = arguments.stream().map(p -> p.string()).collect(Collectors.joining(","));
+        String argumentString = arguments.stream().map(p -> p.string()).collect(Collectors.joining(", "));
         sb.append(function.string());
         sb.append("(");
         sb.append(argumentString);

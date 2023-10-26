@@ -6,8 +6,9 @@ public class ReturnStatement implements IStatement{
     private Token token;
     private IExpression expression;
 
-    public ReturnStatement(Token token) {
+    public ReturnStatement(Token token, IExpression expression) {
         this.token = token;
+        this.expression = expression;
     }
 
     @Override

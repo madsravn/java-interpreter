@@ -33,7 +33,7 @@ public class FunctionLiteral  implements IExpression{
     @Override
     public String string() {
         StringBuilder sb = new StringBuilder();
-        String paramString = parameters.stream().map(p -> p.string()).collect(Collectors.joining(","));
+        String paramString = parameters.stream().map(p -> p.string()).collect(Collectors.joining(", "));
 
         sb.append(token.getLiteral());
         sb.append("(");

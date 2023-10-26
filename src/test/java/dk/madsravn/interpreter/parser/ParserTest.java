@@ -71,7 +71,7 @@ public class ParserTest {
 
         // TODO: Should the errors be on the program or on the parser?
         Program program = parser.parseProgram();
-        assertEquals(parser.getErrors().size(), 4);
+        assertEquals(parser.getErrors().size(), 5);
     }
 
     @Test
@@ -82,8 +82,7 @@ public class ParserTest {
         Program program = parser.parseProgram();
 
         assertEquals(parser.getErrors().size(), 0);
-        // TODO: THIS DOESNT COMPLETELY WORK YET
-        assertEquals(program.string(), "let myVar = ;");
+        assertEquals(program.string(), "let myVar = 5;");
     }
 
     @Test
@@ -348,7 +347,11 @@ public class ParserTest {
                 new OperatorPrecedenceParsing("(5 + 5) * 2", "((5 + 5) * 2)"),
                 new OperatorPrecedenceParsing("2 / (5 + 5)", "(2 / (5 + 5))"),
                 new OperatorPrecedenceParsing("-(5 + 5)", "(-(5 + 5))"),
-                new OperatorPrecedenceParsing("!(true == true)", "(!(true == true))")
+                new OperatorPrecedenceParsing("!(true == true)", "(!(true == true))"),
+                new OperatorPrecedenceParsing("a + add(b * c) + d", "((a + add((b * c))) + d)"),
+                new OperatorPrecedenceParsing("add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))", "add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))"),
+                new OperatorPrecedenceParsing("add(a + b + c * d / f + g)", "add((((a + b) + ((c * d) / f)) + g))")
+
 
         );
 

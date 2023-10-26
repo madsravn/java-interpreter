@@ -8,8 +8,10 @@ public class LetStatement implements IStatement {
     Identifier name;
     IExpression value;
 
-    public LetStatement(Token token) {
+    public LetStatement(Token token, Identifier name, IExpression value) {
         this.token = token;
+        this.name = name;
+        this.value = value;
     }
     @Override
     public void statementNode() {}

@@ -63,7 +63,7 @@ public class Parser {
 
     private boolean getInfixExpression(TokenType type) {
         switch(type) {
-            case PLUS, MINUS, SLASH, ASTERISK, EQ, NOT_EQ, LT, GT:
+            case PLUS, MINUS, SLASH, ASTERISK, EQ, NOT_EQ, LT, GT, LPAREN:
                 return true;
             default:
                 return false;
@@ -222,6 +222,7 @@ public class Parser {
     private IExpression parseExpression(PrecedenceEnum precedence) {
         IExpression left = getPrefixExpression();
         if (left == null) {
+            noPrefixParseFunctionError(currentToken.getType());
             return null;
         }
 
@@ -230,10 +231,16 @@ public class Parser {
             if (infix == false) {
                 return null;
             }
+            // TODO: This needs to be prettier!!!
+            if(peekToken.getType() == LPAREN) {
+                nextToken();
+                left = parseCallExpression(left);
 
-            nextToken();
+            } else {
 
-            left = parseInfixExpression(left);
+                nextToken();
+                left = parseInfixExpression(left);
+            }
         }
 
         return left;
@@ -312,34 +319,44 @@ public class Parser {
     }
 
     private ReturnStatement parseReturnStatement() {
-        ReturnStatement statement = new ReturnStatement(currentToken);
+        Token token = currentToken;
         nextToken();
+
+        IExpression value = parseExpression(LOWEST);
 
         while(!currentTokenType(TokenType.SEMICOLON)) {
             nextToken();
         }
+
+        ReturnStatement statement = new ReturnStatement(token, value);
         return statement;
     }
 
     private LetStatement parseLetStatement() {
-        LetStatement statement = new LetStatement(currentToken);
+        Token token = currentToken;
 
         if (!expectPeekType(TokenType.IDENT)) {
             // TODO: This is ugly
             return null;
         }
 
-        statement.setName(new Identifier(currentToken, currentToken.getLiteral()));
+        // TODO: Remove method and replace with constructor call to LetStatement
+        Identifier name = new Identifier(currentToken, currentToken.getLiteral());
 
         if (!expectPeekType(TokenType.ASSIGN)) {
             // TODO: This is ugly
             return null;
         }
 
+        nextToken();
+        IExpression value = parseExpression(LOWEST);
+
+
         while (!currentTokenType(TokenType.SEMICOLON)) {
             nextToken();
         }
 
+        LetStatement statement = new LetStatement(token, name, value);
         return statement;
     }
 

@@ -1,6 +1,8 @@
 package dk.madsravn.interpreter.repl;
 
+import dk.madsravn.interpreter.ast.Program;
 import dk.madsravn.interpreter.lexer.Lexer;
+import dk.madsravn.interpreter.parser.Parser;
 import dk.madsravn.interpreter.tokens.Token;
 
 import java.io.BufferedReader;
@@ -17,12 +19,22 @@ public class Repl {
             try {
                 String input = br.readLine();
                 Lexer lexer = new Lexer(input);
-                List<Token> tokens = lexer.readAllTokens();
-                tokens.stream().forEach(System.out::println);
+                Parser parser = new Parser(lexer);
+                Program program = parser.parseProgram();
+                if (parser.getErrors().size() > 0) {
+                    printParserErrors(parser.getErrors());
+                    continue;
+                }
+                System.out.println(program.string());
+                System.out.println("");
             } catch (Exception e) {
 
             }
 
         }
+    }
+
+    private void printParserErrors(List<String> errors) {
+        errors.stream().map(s -> "\t" + s).forEach(System.out::println);
     }
 }
