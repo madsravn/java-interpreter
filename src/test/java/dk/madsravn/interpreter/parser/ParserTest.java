@@ -129,18 +129,7 @@ public class ParserTest {
 
 
     // TODO: InfixDataBoolean and InfixDataInteger needs to be merged somehow
-    private class InfixDataBoolean {
-        public String input;
-        public String operator;
-        public boolean leftValue;
-        public boolean rightValue;
-        public InfixDataBoolean(String input, boolean leftValue, String operator, boolean rightValue) {
-            this.input = input;
-            this.leftValue = leftValue;
-            this.operator = operator;
-            this.rightValue = rightValue;
-        }
-    }
+    private record InfixDataBoolean(String input, boolean leftValue, String operator, boolean rightValue) { }
 
     @Test
     public void testParsingBooleanInfixExpressions() {
@@ -183,18 +172,7 @@ public class ParserTest {
 
     }
 
-    private class InfixDataInteger {
-        public String input;
-        public String operator;
-        public int leftValue;
-        public int rightValue;
-        public InfixDataInteger(String input, int leftValue, String operator, int rightValue) {
-            this.input = input;
-            this.leftValue = leftValue;
-            this.operator = operator;
-            this.rightValue = rightValue;
-        }
-    }
+    private record InfixDataInteger(String input, int leftValue, String operator, int rightValue) { }
 
     @Test
     public void testParsingIntegerInfixExpressions() {
@@ -237,17 +215,7 @@ public class ParserTest {
 
     }
 
-    private class PrefixDataBoolean
-    {
-        public String input;
-        public String operator;
-        public boolean value;
-        public PrefixDataBoolean(String input, String operator, boolean value) {
-            this.input = input;
-            this.operator = operator;
-            this.value = value;
-        }
-    }
+    private record PrefixDataBoolean(String input, String operator, boolean value) { }
 
     @Test
     public void testParsingBooleanPrefixExpression() {
@@ -276,17 +244,7 @@ public class ParserTest {
         }
     }
 
-    private class PrefixDataInteger
-    {
-        public String input;
-        public String operator;
-        public int integerValue;
-        public PrefixDataInteger(String input, String operator, int integerValue) {
-            this.input = input;
-            this.operator = operator;
-            this.integerValue = integerValue;
-        }
-    }
+    private record PrefixDataInteger(String input, String operator, int integerValue) { }
 
     @Test
     public void testParsingIntegerPrefixExpression() {
@@ -315,14 +273,7 @@ public class ParserTest {
         }
     }
 
-    private class OperatorPrecedenceParsing {
-        public String input;
-        public String expected;
-        public OperatorPrecedenceParsing(String input, String expected) {
-            this.input = input;
-            this.expected = expected;
-        }
-    }
+    private record OperatorPrecedenceParsing(String input, String expected) { }
 
     @Test
     public void testOperatorPrecedenceParsing() {
@@ -467,14 +418,7 @@ public class ParserTest {
         assertEquals(infixExpression.getOperator(), "+");
     }
 
-    private class FunctionParameterData {
-        public String input;
-        public List<String> parameters;
-        public FunctionParameterData(String input, List<String> parameters) {
-            this.input = input;
-            this.parameters = parameters;
-        }
-    }
+    private record FunctionParameterData(String input, List<String> parameters) { }
 
     @Test
     public void testFuntionParameterParsing() {

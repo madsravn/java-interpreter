@@ -16,15 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class EvaluatorTest {
 
-    //TODO: Use record instead. Then we get all of this
-    private class EvalIntegerData {
-        public String input;
-        public int value;
-        public EvalIntegerData(String input, int value) {
-            this.input = input;
-            this.value = value;
-        }
-    }
+    private record EvalIntegerData(String input, int value) { }
 
     @Test
     public void testEvalIntegerExpression() {
