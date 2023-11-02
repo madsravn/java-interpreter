@@ -39,5 +39,5 @@ jobs:
       - uses: dbelyaev/action-checkstyle@master
         with:
           github_token: ${{ secrets.token }}
-          reporter: github-pr-review
+          reporter: github-check
           level: warning
