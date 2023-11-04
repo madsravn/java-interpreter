@@ -2,6 +2,7 @@ package dk.madsravn.interpreter.object;
 
 public class BooleanObject implements IObject {
     private boolean value;
+    private static String OBJ_TYTPE = "BOOLEAN";
 
     public BooleanObject(boolean value) {
         this.value = value;
@@ -12,7 +13,7 @@ public class BooleanObject implements IObject {
     }
 
     public String type() {
-        return "BOOLEAN";
+        return OBJ_TYTPE;
     }
 
     public String inspect() {

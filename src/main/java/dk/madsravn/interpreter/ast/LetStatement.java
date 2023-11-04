@@ -29,6 +29,10 @@ public class LetStatement implements IStatement {
         return this.name;
     }
 
+    public IExpression getValue() {
+        return value;
+    }
+
     @Override
     public String string() {
         StringBuilder sb = new StringBuilder();

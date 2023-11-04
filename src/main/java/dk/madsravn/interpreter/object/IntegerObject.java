@@ -2,6 +2,7 @@ package dk.madsravn.interpreter.object;
 
 public class IntegerObject implements IObject {
     private int value;
+    private static String OBJ_TYPE = "INTEGER";
 
     public IntegerObject(int value) {
         this.value = value;
@@ -19,7 +20,7 @@ public class IntegerObject implements IObject {
     // TODO: Create enum for this.
     @Override
     public String type() {
-        return "INTEGER";
+        return OBJ_TYPE;
     }
 
 }

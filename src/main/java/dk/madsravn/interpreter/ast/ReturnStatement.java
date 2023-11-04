@@ -11,6 +11,10 @@ public class ReturnStatement implements IStatement{
         this.expression = expression;
     }
 
+    public IExpression getExpression() {
+        return expression;
+    }
+
     @Override
     public void statementNode() {}
 

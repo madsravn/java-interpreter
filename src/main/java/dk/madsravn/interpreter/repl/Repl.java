@@ -3,6 +3,7 @@ package dk.madsravn.interpreter.repl;
 import dk.madsravn.interpreter.ast.Program;
 import dk.madsravn.interpreter.evaluator.Evaluator;
 import dk.madsravn.interpreter.lexer.Lexer;
+import dk.madsravn.interpreter.object.Environment;
 import dk.madsravn.interpreter.object.IObject;
 import dk.madsravn.interpreter.parser.Parser;
 import dk.madsravn.interpreter.tokens.Token;
@@ -15,6 +16,7 @@ public class Repl {
     private final String PROMPT = ">> ";
 
     public void start() {
+        Environment env = new Environment();
         while(true) {
             System.out.print(PROMPT);
             BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
@@ -29,7 +31,7 @@ public class Repl {
                 }
                 System.out.println(program.string());
                 System.out.println("YIELDS:");
-                IObject evaluated = Evaluator.evaluate(program);
+                IObject evaluated = Evaluator.evaluate(program, env);
                 if (evaluated != null) {
                     System.out.println(evaluated.inspect());
                 } else {
