@@ -29,6 +29,10 @@ public class FunctionObject implements IObject {
         return body;
     }
 
+    public Environment getEnvironment() {
+        return env;
+    }
+
     @Override
     public String type() {
         return OBJ_TYPE;

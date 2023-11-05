@@ -263,6 +263,33 @@ public class Evaluator {
         return result;
     }
 
+    private static IObject applyFunction(IObject function, List<IObject> arguments) {
+        if(function instanceof FunctionObject) {
+            FunctionObject functionObject = (FunctionObject) function;
+            Environment extendedEnvironment = extendFunctionEnvironment(functionObject, arguments);
+            IObject evaluated = evaluate(functionObject.getBody(), extendedEnvironment);
+            return unwrapReturnValue(evaluated);
+        } else {
+            return ErrorObject.notAFunction(function.type());
+        }
+    }
+
+    private static Environment extendFunctionEnvironment(FunctionObject function, List<IObject> arguments) {
+        Environment env = new Environment(function.getEnvironment());
+        for(int i = 0; i < function.getParametersLength(); ++i) {
+            env.set(function.getParameters().get(i).getValue(), arguments.get(i));
+        }
+        return env;
+    }
+
+    private static IObject unwrapReturnValue(IObject object) {
+        if(object instanceof ReturnObject) {
+            ReturnObject returnObject = (ReturnObject) object;
+            return returnObject.getValue();
+        }
+        return object;
+    }
+
     private static boolean isError(IObject object) {
         return (object instanceof ErrorObject);
     }

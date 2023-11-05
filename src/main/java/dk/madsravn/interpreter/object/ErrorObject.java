@@ -15,6 +15,10 @@ public class ErrorObject implements IObject {
         return new ErrorObject("identifier not found: " + message);
     }
 
+    public static ErrorObject notAFunction(String message) {
+        return new ErrorObject("not a function: " + message);
+    }
+
     public ErrorObject(String message) {
         this.message = message;
     }
