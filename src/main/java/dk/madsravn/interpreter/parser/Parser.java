@@ -87,11 +87,17 @@ public class Parser {
                 return parseIfExpression();
             case FUNCTION:
                 return parseFunctionLiteral();
+            case STRING:
+                return parseStringLiteral();
             default:
                 noPrefixParseFunctionError(currentToken.getType());
                 // TODO: This is ugly
                 return null;
         }
+    }
+
+    private IExpression parseStringLiteral() {
+        return new StringLiteral(currentToken, currentToken.getLiteral());
     }
 
     private IExpression parseCallExpression(IExpression function) {

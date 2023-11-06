@@ -61,6 +61,8 @@ public class LexerTest {
                         
                         10 == 10;
                         10 != 9;
+                        "foobar"
+                        "foo bar"
                         """;
         List<Token> tokens = List.of(
                 new Token(TokenType.LET, "let"),
@@ -137,6 +139,8 @@ public class LexerTest {
                 new Token(TokenType.NOT_EQ, "!="),
                 new Token(TokenType.INT, "9"),
                 new Token(TokenType.SEMICOLON, ";"),
+                new Token(TokenType.STRING, "foobar"),
+                new Token(TokenType.STRING, "foo bar"),
 
                 Lexer.eofToken()
         );

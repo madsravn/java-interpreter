@@ -140,7 +140,8 @@ public class EvaluatorTest {
                 new EvalStringData("false + true;", "unknown operator: BOOLEAN + BOOLEAN"),
                 new EvalStringData("5; false + true; 5;", "unknown operator: BOOLEAN + BOOLEAN"),
                 new EvalStringData("if (10 > 1) { true + false; }", "unknown operator: BOOLEAN + BOOLEAN"),
-                new EvalStringData("foobar", "identifier not found: foobar")
+                new EvalStringData("foobar", "identifier not found: foobar"),
+                new EvalStringData("\"Hello\" - \"World\"", "unknown operator: STRING - STRING")
         );
 
         for(EvalStringData input : inputs) {
@@ -190,6 +191,28 @@ public class EvaluatorTest {
             IObject object = testEval(input.input);
             testIntegerObject(object, input.value);
         }
+    }
+
+    @Test
+    public void testStringLiteral() {
+        String input = """
+                "Hello World!"
+                """;
+        IObject evaluated = testEval(input);
+        assertTrue(evaluated instanceof StringObject);
+        StringObject stringObject = (StringObject) evaluated;
+        assertEquals(stringObject.getValue(), "Hello World!");
+    }
+
+    @Test
+    public void testStringConcatenation() {
+        String input = """
+                "Hello" + " " + "World!"
+                """;
+        IObject evaluated = testEval(input);
+        assertTrue(evaluated instanceof StringObject);
+        StringObject stringObject = (StringObject) evaluated;
+        assertEquals(stringObject.getValue(), "Hello World!");
     }
 
     private void testErrorObject(IObject object, String message) {

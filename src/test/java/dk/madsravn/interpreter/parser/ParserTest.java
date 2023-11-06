@@ -472,6 +472,24 @@ public class ParserTest {
 
     }
 
+    @Test
+    public void testStringLiteralExpression() {
+        String input = """
+                "hello world";
+                """;
+        Lexer lexer = new Lexer(input);
+        Parser parser = new Parser(lexer);
+        Program program = parser.parseProgram();
+        checkForParseErrors(parser, input);
+
+        assertTrue(program.getStatements().get(0) instanceof ExpressionStatement);
+        ExpressionStatement expressionStatement = (ExpressionStatement) program.getStatements().get(0);
+        assertTrue(expressionStatement.getExpression() instanceof StringLiteral);
+        StringLiteral stringLiteral = (StringLiteral) expressionStatement.getExpression();
+        assertEquals(stringLiteral.getValue(), "hello world");
+
+    }
+
     public void testIntegerInfixExpression(IExpression expression, int left, String operator, int right) {
         assertTrue(expression instanceof InfixExpression);
         InfixExpression infixExpression = (InfixExpression) expression;

@@ -44,6 +44,9 @@ public class Lexer {
     private Token findToken() {
         skipWhitespace();
         switch (ch) {
+            case '"':
+                String content = readString();
+                return new Token(TokenType.STRING, content);
             case '=':
                 if (peekChar() == '=') {
                     char current = ch;
@@ -100,6 +103,18 @@ public class Lexer {
                     return new Token(TokenType.ILLEGAL, "" + ch);
                 }
         }
+    }
+
+    private String readString() {
+        int startPosition = position + 1;
+        // TODO: This is ugly. Fix
+        while(true) {
+            readChar();
+            if(ch == '"' || ch == NOTHING) {
+                break;
+            }
+        }
+        return input.substring(startPosition, position);
     }
 
     private String readIdentifier() {

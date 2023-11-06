@@ -34,6 +34,10 @@ public class Evaluator {
         if(node instanceof Identifier) {
             return evaluateIdentifier(node, env);
         }
+        if(node instanceof StringLiteral) {
+            StringLiteral stringLiteral = (StringLiteral) node;
+            return new StringObject(stringLiteral.getValue());
+        }
         if(node instanceof CallExpression) {
             CallExpression callExpression = (CallExpression) node;
             var function = evaluate(callExpression.getFunction(), env);
@@ -154,6 +158,11 @@ public class Evaluator {
         if(!left.type().equals(right.type())) {
             return ErrorObject.typeMismatchError("" + left.type() + " " + operator + " " + right.type());
         }
+        if(left instanceof StringObject && right instanceof StringObject) {
+            var leftValue = (StringObject)left;
+            var rightValue = (StringObject)right;
+            return evaluateStringInfixExpression(operator, leftValue, rightValue);
+        }
         if(left instanceof IntegerObject && right instanceof IntegerObject) {
             return evaluateIntegerInfixExpression(operator, left, right);
         }
@@ -168,6 +177,13 @@ public class Evaluator {
             }
         }
         return ErrorObject.unknownOperatorError("" + left.type() + " " + operator + " " + right.type());
+    }
+
+    private static IObject evaluateStringInfixExpression(String operator, StringObject left, StringObject right) {
+        if(!operator.equals("+")) {
+            return ErrorObject.unknownOperatorError(left.type() + " " + operator + " " + right.type());
+        }
+        return new StringObject(left.getValue() + right.getValue());
     }
 
     private static IObject evaluateIntegerInfixExpression(String operator, IObject left, IObject right) {

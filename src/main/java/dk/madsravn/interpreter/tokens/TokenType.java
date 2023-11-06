@@ -27,6 +27,7 @@ public enum TokenType {
     RETURN("RETURN"),
     EQ("=="),
     NOT_EQ("!="),
+    STRING("STRING"),
     UNKNOWN("UNKNOWN"),
     ;
     private final String prettyName;
