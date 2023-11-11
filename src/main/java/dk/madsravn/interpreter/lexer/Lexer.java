@@ -47,6 +47,8 @@ public class Lexer {
             case '"':
                 String content = readString();
                 return new Token(TokenType.STRING, content);
+            case ':':
+                return new Token(TokenType.COLON, ":");
             case '=':
                 if (peekChar() == '=') {
                     char current = ch;
@@ -89,6 +91,10 @@ public class Lexer {
                 return new Token(TokenType.LBRACE, "{");
             case '}':
                 return new Token(TokenType.RBRACE, "}");
+            case '[':
+                return new Token(TokenType.LBRACKET, "[");
+            case ']':
+                return new Token(TokenType.RBRACKET, "]");
             case NOTHING:
                 return new Token(TokenType.EOF, "" + NOTHING);
             default:

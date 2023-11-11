@@ -28,6 +28,9 @@ public enum TokenType {
     EQ("=="),
     NOT_EQ("!="),
     STRING("STRING"),
+    LBRACKET("["),
+    RBRACKET("]"),
+    COLON(":"),
     UNKNOWN("UNKNOWN"),
     ;
     private final String prettyName;

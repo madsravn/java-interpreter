@@ -8,6 +8,7 @@ public enum PrecedenceEnum {
     PRODUCT(5),
     PREFIX(6),
     CALL(7),
+    INDEX(8),
     ;
 
     private final int order;

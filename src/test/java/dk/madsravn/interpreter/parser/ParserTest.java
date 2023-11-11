@@ -5,7 +5,9 @@ import dk.madsravn.interpreter.lexer.Lexer;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -301,9 +303,9 @@ public class ParserTest {
                 new OperatorPrecedenceParsing("!(true == true)", "(!(true == true))"),
                 new OperatorPrecedenceParsing("a + add(b * c) + d", "((a + add((b * c))) + d)"),
                 new OperatorPrecedenceParsing("add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))", "add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))"),
-                new OperatorPrecedenceParsing("add(a + b + c * d / f + g)", "add((((a + b) + ((c * d) / f)) + g))")
-
-
+                new OperatorPrecedenceParsing("add(a + b + c * d / f + g)", "add((((a + b) + ((c * d) / f)) + g))"),
+                new OperatorPrecedenceParsing("a * [1, 2, 3, 4][b * c] * d", "((a * ([1, 2, 3, 4][(b * c)])) * d)"),
+                new OperatorPrecedenceParsing("add(a * b[2], b[1], 2 * [1, 2][1])", "add((a * (b[2])), (b[1]), (2 * ([1, 2][1])))")
         );
 
         for (OperatorPrecedenceParsing operatorPrecedenceParsing : operatorPrecedenceParsingList) {
@@ -488,6 +490,118 @@ public class ParserTest {
         StringLiteral stringLiteral = (StringLiteral) expressionStatement.getExpression();
         assertEquals(stringLiteral.getValue(), "hello world");
 
+    }
+
+    @Test
+    public void testParsingArrayLiterals() {
+        String input = "[1, 2 * 2, 3 + 3]";
+        Lexer lexer = new Lexer(input);
+        Parser parser = new Parser(lexer);
+        Program program = parser.parseProgram();
+        checkForParseErrors(parser, input);
+        assertEquals(program.getStatementsLength(), 1);
+        assertTrue(program.getStatements().get(0) instanceof ExpressionStatement);
+        ExpressionStatement expressionStatement = (ExpressionStatement) program.getStatements().get(0);
+
+        assertTrue(expressionStatement.getExpression() instanceof ArrayLiteral);
+        ArrayLiteral arrayLiteral = (ArrayLiteral) expressionStatement.getExpression();
+        assertEquals(arrayLiteral.getElementsLength(), 3);
+
+        testIntegerLiteral(arrayLiteral.getElements().get(0), 1);
+        testIntegerInfixExpression(arrayLiteral.getElements().get(1), 2, "*", 2);
+        testIntegerInfixExpression(arrayLiteral.getElements().get(2), 3, "+", 3);
+    }
+
+    @Test
+    public void testParsingIndexExpressions() {
+        String input = "myArray[1 + 1]";
+        Lexer lexer = new Lexer(input);
+        Parser parser = new Parser(lexer);
+        Program program = parser.parseProgram();
+        checkForParseErrors(parser, input);
+
+        assertEquals(program.getStatementsLength(), 1);
+        assertTrue(program.getStatements().get(0) instanceof ExpressionStatement);
+
+        ExpressionStatement expressionStatement = (ExpressionStatement) program.getStatements().get(0);
+        assertTrue(expressionStatement.getExpression() instanceof IndexExpression);
+        IndexExpression indexExpression = (IndexExpression) expressionStatement.getExpression();
+        testIdentifier(indexExpression.getLeft(), "myArray");
+        testIntegerInfixExpression(indexExpression.getIndex(), 1, "+", 1);
+    }
+
+    @Test
+    public void testParsingHashLiteralStringKeys() {
+        String input = """
+                {"one": 1, "two": 2, "three": 3}
+                """;
+        Lexer lexer = new Lexer(input);
+        Parser parser = new Parser(lexer);
+        Program program = parser.parseProgram();
+        checkForParseErrors(parser, input);
+
+        Map<String, Integer> expected = Map.of("one", 1, "two", 2, "three", 3);
+        Map<String, Integer> actual = new HashMap<String, Integer>();
+
+        assertEquals(program.getStatementsLength(), 1);
+        assertTrue(program.getStatements().get(0) instanceof ExpressionStatement);
+        ExpressionStatement expressionStatement = (ExpressionStatement) program.getStatements().get(0);
+        assertTrue(expressionStatement.getExpression() instanceof  HashLiteral);
+        HashLiteral hashLiteral = (HashLiteral) expressionStatement.getExpression();
+        assertEquals(hashLiteral.getPairsLength(), 3);
+        for (Map.Entry<IExpression, IExpression> expression: hashLiteral.getPairs().entrySet()) {
+            assertTrue(expression.getKey() instanceof StringLiteral);
+            assertTrue(expression.getValue() instanceof IntegerLiteral);
+            StringLiteral stringLiteral = (StringLiteral) expression.getKey();
+            IntegerLiteral integerLiteral = (IntegerLiteral) expression.getValue();
+            actual.put(stringLiteral.getValue(), integerLiteral.getValue());
+        }
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testParsingEmptyHashLiteral() {
+        String input = "{}";
+        Lexer lexer = new Lexer(input);
+        Parser parser = new Parser(lexer);
+        Program program = parser.parseProgram();
+        checkForParseErrors(parser, input);
+
+
+        assertEquals(program.getStatementsLength(), 1);
+        assertTrue(program.getStatements().get(0) instanceof ExpressionStatement);
+        ExpressionStatement expressionStatement = (ExpressionStatement) program.getStatements().get(0);
+        assertTrue(expressionStatement.getExpression() instanceof  HashLiteral);
+        HashLiteral hashLiteral = (HashLiteral) expressionStatement.getExpression();
+        assertEquals(hashLiteral.getPairsLength(), 0);
+    }
+
+    @Test
+    public void testParsingHashLiteralWithExpressions() {
+        String input = """
+                {"one": 0 + 1, "two": 10 - 8, "three": 15 / 5}
+                """;
+        Lexer lexer = new Lexer(input);
+        Parser parser = new Parser(lexer);
+        Program program = parser.parseProgram();
+        checkForParseErrors(parser, input);
+
+        Map<String, IExpression> actual = new HashMap<String, IExpression>();
+
+        assertEquals(program.getStatementsLength(), 1);
+        assertTrue(program.getStatements().get(0) instanceof ExpressionStatement);
+        ExpressionStatement expressionStatement = (ExpressionStatement) program.getStatements().get(0);
+        assertTrue(expressionStatement.getExpression() instanceof  HashLiteral);
+        HashLiteral hashLiteral = (HashLiteral) expressionStatement.getExpression();
+        assertEquals(hashLiteral.getPairsLength(), 3);
+        for (Map.Entry<IExpression, IExpression> expression: hashLiteral.getPairs().entrySet()) {
+            assertTrue(expression.getKey() instanceof StringLiteral);
+            StringLiteral stringLiteral = (StringLiteral) expression.getKey();
+            actual.put(stringLiteral.getValue(), expression.getValue());
+        }
+        testIntegerInfixExpression(actual.get("one"), 0, "+", 1);
+        testIntegerInfixExpression(actual.get("two"), 10, "-", 8);
+        testIntegerInfixExpression(actual.get("three"), 15, "/", 5);
     }
 
     public void testIntegerInfixExpression(IExpression expression, int left, String operator, int right) {

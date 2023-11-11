@@ -7,7 +7,9 @@ import dk.madsravn.interpreter.tokens.TokenType;
 
 import java.sql.Array;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static dk.madsravn.interpreter.parser.PrecedenceEnum.*;
 import static dk.madsravn.interpreter.tokens.TokenType.*;
@@ -63,7 +65,7 @@ public class Parser {
 
     private boolean getInfixExpression(TokenType type) {
         switch(type) {
-            case PLUS, MINUS, SLASH, ASTERISK, EQ, NOT_EQ, LT, GT, LPAREN:
+            case PLUS, MINUS, SLASH, ASTERISK, EQ, NOT_EQ, LT, GT, LPAREN, LBRACKET:
                 return true;
             default:
                 return false;
@@ -89,6 +91,10 @@ public class Parser {
                 return parseFunctionLiteral();
             case STRING:
                 return parseStringLiteral();
+            case LBRACKET:
+                return parseArrayLiteral();
+            case LBRACE:
+                return parseHashLiteral();
             default:
                 noPrefixParseFunctionError(currentToken.getType());
                 // TODO: This is ugly
@@ -100,30 +106,62 @@ public class Parser {
         return new StringLiteral(currentToken, currentToken.getLiteral());
     }
 
-    private IExpression parseCallExpression(IExpression function) {
-        CallExpression callExpression = new CallExpression(currentToken, function, parseCallArguments());
-        return callExpression;
+    private IExpression parseHashLiteral() {
+        Token token = currentToken;
+        Map<IExpression, IExpression> pairs = new HashMap<>();
+        while(!peekTokenType(RBRACE)) {
+            nextToken();
+            var key = parseExpression(LOWEST);
+
+            if(!expectPeekType(COLON)) {
+                return null;
+            }
+
+            nextToken();
+            var value = parseExpression(LOWEST);
+            pairs.put(key, value);
+
+            if(!peekTokenType(RBRACE) && !expectPeekType(COMMA)) {
+                return null;
+            }
+        }
+
+        if(!expectPeekType(RBRACE)) {
+            return null;
+        }
+
+        return new HashLiteral(token, pairs);
     }
 
-    private List<IExpression> parseCallArguments() {
-        List<IExpression> callArguments = new ArrayList<IExpression>();
-        if (peekTokenType(RPAREN)) {
+    private IExpression parseArrayLiteral() {
+        return new ArrayLiteral(currentToken, parseExpressionList(RBRACKET));
+    }
+
+    private List<IExpression> parseExpressionList(TokenType end) {
+        List<IExpression> expressions = new ArrayList<IExpression>();
+        if(peekTokenType(end)) {
             nextToken();
-            return callArguments;
+            return expressions;
         }
         nextToken();
-        callArguments.add(parseExpression(LOWEST));
+        expressions.add(parseExpression(LOWEST));
 
         while(peekTokenType(COMMA)) {
             nextToken();
             nextToken();
-            callArguments.add(parseExpression(LOWEST));
+            expressions.add(parseExpression(LOWEST));
         }
-        if (!expectPeekType(RPAREN)) {
+
+        if(!expectPeekType(end)) {
             return null;
         }
 
-        return callArguments;
+        return expressions;
+    }
+
+    private IExpression parseCallExpression(IExpression function) {
+        CallExpression callExpression = new CallExpression(currentToken, function, parseExpressionList(RPAREN));
+        return callExpression;
     }
 
     private IExpression parseFunctionLiteral() {
@@ -242,7 +280,11 @@ public class Parser {
                 nextToken();
                 left = parseCallExpression(left);
 
-            } else {
+            } else if (peekToken.getType() == LBRACKET) {
+                nextToken();
+                left = parseIndexExpression(left);
+            }
+            else {
 
                 nextToken();
                 left = parseInfixExpression(left);
@@ -252,8 +294,20 @@ public class Parser {
         return left;
     }
 
+    private IndexExpression parseIndexExpression(IExpression left) {
+        Token token = currentToken;
+        nextToken();
+        IExpression index = parseExpression(LOWEST);
+        if(!expectPeekType(RBRACKET)) {
+            return null;
+        }
+        return new IndexExpression(token, left, index);
+    }
+
     private PrecedenceEnum getPrecedence(TokenType type) {
         switch (type) {
+            case LBRACKET:
+                return INDEX;
             case LPAREN:
                 return CALL;
             case EQ, NOT_EQ:

@@ -1,5 +1,7 @@
 package dk.madsravn.interpreter.object;
 
+import java.util.Objects;
+
 public class StringObject implements IObject {
     private static String OBJ_TYPE = "STRING";
     private String value;
@@ -18,6 +20,21 @@ public class StringObject implements IObject {
 
     @Override
     public String inspect() {
-        return value;
+        return "\"" + value + "\"";
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(OBJ_TYPE, value);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        StringObject that = (StringObject) o;
+        return this.value.equals(that.value);
     }
 }
