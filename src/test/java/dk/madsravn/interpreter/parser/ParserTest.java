@@ -34,9 +34,9 @@ public class ParserTest {
         assertEquals(((LetStatement)program.getStatements().get(1)).getName().getValue(), "y", "Second LET identifier expected to be 'x', but was " + ((LetStatement)program.getStatements().get(1)).getName().getValue());
         assertEquals(((LetStatement)program.getStatements().get(2)).getName().getValue(), "foobar", "Third LET identifier expected to be 'x', but was " + ((LetStatement)program.getStatements().get(2)).getName().getValue());
 
-        assertEquals(program.getStatements().get(0).tokenLiteral(), "let", "First LET identifier expected to be 'x', but was " + program.getStatements().get(0).tokenLiteral());
-        assertEquals(program.getStatements().get(1).tokenLiteral(), "let", "Second LET identifier expected to be 'x', but was " + program.getStatements().get(1).tokenLiteral());
-        assertEquals(program.getStatements().get(2).tokenLiteral(), "let", "Third LET identifier expected to be 'x', but was " + program.getStatements().get(2).tokenLiteral());
+        assertEquals(program.getStatements().get(0).tokenLiteral(), "let");
+        assertEquals(program.getStatements().get(1).tokenLiteral(), "let");
+        assertEquals(program.getStatements().get(2).tokenLiteral(), "let");
 
     }
 
@@ -71,7 +71,6 @@ public class ParserTest {
         Lexer lexer = new Lexer(input);
         Parser parser = new Parser(lexer);
 
-        // TODO: Should the errors be on the program or on the parser?
         Program program = parser.parseProgram();
         assertEquals(parser.getErrors().size(), 5);
     }
@@ -82,8 +81,8 @@ public class ParserTest {
         Lexer lexer = new Lexer(input);
         Parser parser = new Parser(lexer);
         Program program = parser.parseProgram();
+        checkForParseErrors(parser, input);
 
-        assertEquals(parser.getErrors().size(), 0);
         assertEquals(program.string(), "let myVar = 5;");
     }
 
@@ -92,9 +91,8 @@ public class ParserTest {
         String input = "foobar;";
         Lexer lexer = new Lexer(input);
         Parser parser = new Parser(lexer);
-
         Program program = parser.parseProgram();
-        assertEquals(parser.getErrors().size(), 0);
+        checkForParseErrors(parser, input);
 
         assertEquals(program.getStatementsLength(), 1);
         IStatement statement = program.getStatements().get(0);
@@ -171,7 +169,6 @@ public class ParserTest {
             assertEquals(leftBooleanLiteral.getValue(), infixData.leftValue);
             assertEquals(leftBooleanLiteral.tokenLiteral(), "" + infixData.leftValue);
         }
-
     }
 
     private record InfixDataInteger(String input, int leftValue, String operator, int rightValue) { }

@@ -90,6 +90,7 @@ public class EvaluatorTest {
                 new EvalBooleanData("!!0", false),
                 new EvalBooleanData("!0", true)
         );
+
         for(EvalBooleanData input : inputs) {
             IObject object = testEval(input.input);
             testBooleanObject(object, input.value, input.input);
@@ -107,6 +108,7 @@ public class EvaluatorTest {
                 new EvalIntegerData("if (1 > 2) { 10 } else { 20 }", 20),
                 new EvalIntegerData("if (1 < 2) { 10 } else { 20 }", 10)
         );
+
         for(EvalIntegerData input : inputs) {
             IObject object = testEval(input.input);
             if(input.value != null) {
@@ -160,6 +162,7 @@ public class EvaluatorTest {
                 new EvalIntegerData("let a = 5; let b = a; b;", 5),
                 new EvalIntegerData("let a = 5; let b = a; let c = a + b + 5; c;", 15)
         );
+
         for(EvalIntegerData input : inputs) {
             IObject object = testEval(input.input);
             testIntegerObject(object, input.value);
@@ -224,6 +227,7 @@ public class EvaluatorTest {
                 new EvalIntegerData("len(\"four\")", 4),
                 new EvalIntegerData("len(\"Hello world\")", 11)
         );
+
         for(EvalIntegerData input : inputs) {
             IObject object = testEval(input.input);
             testIntegerObject(object, input.value);
@@ -236,6 +240,7 @@ public class EvaluatorTest {
                 new EvalStringData("len(1)","argument to `len` not supported, got INTEGER"),
                 new EvalStringData("len(\"one\", \"two\")", "wrong number of arguments. got=2, want=1")
         );
+
         for(EvalStringData input : inputs) {
             IObject object = testEval(input.input);
             testErrorObject(object, input.value);
@@ -294,9 +299,8 @@ public class EvaluatorTest {
                 new EvalIntegerArrayData("last([]);", null),
                 new EvalIntegerArrayData("push([2], 3);", Arrays.asList(2, 3)),
                 new EvalIntegerArrayData("first([]);", null)
-
-
         );
+
         for(EvalIntegerArrayData input : inputs) {
             var evaluated = testEval(input.input);
             if(input.value != null) {
@@ -348,6 +352,7 @@ public class EvaluatorTest {
                 new EvalIntegerData("{true: 5}[true]", 5),
                 new EvalIntegerData("{false: 5}[false]", 5)
         );
+
         for(EvalIntegerData input: inputs) {
             var evaluated = testEval(input.input);
             if(input.value != null) {
@@ -378,6 +383,7 @@ public class EvaluatorTest {
         assertTrue(object instanceof ArrayObject);
         ArrayObject arrayObject = (ArrayObject) object;
         assertEquals(arrayObject.getElementsLength(), elements.size());
+
         for (int i = 0; i < elements.size(); i++) {
             assertTrue(arrayObject.getElements().get(i) instanceof IntegerObject);
             IntegerObject integerObject = (IntegerObject) arrayObject.getElements().get(i);
