@@ -30,10 +30,13 @@ public class StringObject implements IObject {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o)
+        // TODO: Compare with the one in Token.java
+        if (this == o) {
             return true;
-        if (o == null || getClass() != o.getClass())
+        }
+        if (o == null || getClass() != o.getClass()) {
             return false;
+        }
         StringObject that = (StringObject) o;
         return this.value.equals(that.value);
     }
