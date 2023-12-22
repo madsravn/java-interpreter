@@ -173,7 +173,6 @@ public class Lexer {
         return token;
     }
 
-    // TODO: Create and make pretty - could be cool if we could stream this
     public List<Token> readAllTokens() {
         List<Token> tokens = new ArrayList<Token>();
         while(true) {

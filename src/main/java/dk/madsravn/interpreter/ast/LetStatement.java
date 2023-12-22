@@ -21,10 +21,6 @@ public class LetStatement implements IStatement {
         return token.getLiteral();
     }
 
-    public void setName(Identifier identifier) {
-        this.name = identifier;
-    }
-
     public Identifier getName() {
         return this.name;
     }

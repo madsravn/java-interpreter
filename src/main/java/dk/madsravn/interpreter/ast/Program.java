@@ -2,6 +2,7 @@ package dk.madsravn.interpreter.ast;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Program implements INode{
     List<IStatement> statements;
@@ -33,8 +34,6 @@ public class Program implements INode{
 
     @Override
     public String string() {
-        StringBuilder sb = new StringBuilder();
-        statements.stream().map(s -> s.string()).forEach(s -> sb.append(s));
-        return sb.toString();
+        return statements.stream().map(s -> s.string()).collect(Collectors.joining(""));
     }
 }

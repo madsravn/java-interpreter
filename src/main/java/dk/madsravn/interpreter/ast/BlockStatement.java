@@ -3,6 +3,7 @@ package dk.madsravn.interpreter.ast;
 import dk.madsravn.interpreter.tokens.Token;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class BlockStatement implements IStatement {
     private Token token;
@@ -26,12 +27,9 @@ public class BlockStatement implements IStatement {
 
     @Override
     public String string() {
-        StringBuilder sb = new StringBuilder();
-        for(IStatement statement : statements) {
-            sb.append(statement.string());
-        }
+        String statementString = statements.stream().map(statement -> statement.string()).collect(Collectors.joining(""));
 
-        return sb.toString();
+        return statementString;
     }
 
     @Override

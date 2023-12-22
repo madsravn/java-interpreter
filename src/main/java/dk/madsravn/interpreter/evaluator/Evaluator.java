@@ -12,116 +12,108 @@ public class Evaluator {
     private static NullObject NULL = new NullObject();
 
     public static IObject evaluate(INode node, Environment env) {
-        // TODO: Ugly?
-        if(node instanceof PrefixExpression) {
-            PrefixExpression prefixExpression = (PrefixExpression) node;
-            IObject right = evaluate(prefixExpression.getRight(), env);
-            if(isError(right)) {
-                return right;
+        return switch(node) {
+            case PrefixExpression prefixExpression -> {
+                IObject right = evaluate(prefixExpression.getRight(), env);
+                if(isError(right)) {
+                    yield right;
+                }
+                yield evaluatePrefixExpression(prefixExpression.getOperator(), right);
             }
-            return evaluatePrefixExpression(prefixExpression.getOperator(), right);
-        }
-        if(node instanceof LetStatement) {
-            LetStatement letStatement = (LetStatement) node;
-            var value = evaluate(letStatement.getValue(), env);
-            if(isError(value)) {
-                return value;
+            case LetStatement letStatement -> {
+                var value = evaluate(letStatement.getValue(), env);
+                if(isError(value)) {
+                    yield value;
+                }
+                env.set(letStatement.getName().getValue(), value);
+                yield null;
             }
-            env.set(letStatement.getName().getValue(), value);
-        }
-        if(node instanceof Identifier) {
-            return evaluateIdentifier(node, env);
-        }
-        if(node instanceof HashLiteral) {
-            HashLiteral hashLiteral = (HashLiteral) node;
-            return evaluateHashLiteral(hashLiteral, env);
-        }
-        if(node instanceof StringLiteral) {
-            StringLiteral stringLiteral = (StringLiteral) node;
-            return new StringObject(stringLiteral.getValue());
-        }
-        if(node instanceof CallExpression) {
-            CallExpression callExpression = (CallExpression) node;
-            var function = evaluate(callExpression.getFunction(), env);
-            if(isError(function)) {
-                return function;
+            case Identifier identifier -> {
+                yield evaluateIdentifier(identifier, env);
             }
-            var args = evaluateExpressions(callExpression.getArguments(), env);
-            if(args.size() == 1 && isError(args.get(0))) {
-                return args.get(0);
+            case HashLiteral hashLiteral -> {
+                yield evaluateHashLiteral(hashLiteral, env);
             }
+            case StringLiteral stringLiteral -> {
+                yield new StringObject(stringLiteral.getValue());
+            }
+            case CallExpression callExpression -> {
+                var function = evaluate(callExpression.getFunction(), env);
+                if(isError(function)) {
+                    yield function;
+                }
+                var args = evaluateExpressions(callExpression.getArguments(), env);
+                if(args.size() == 1 && isError(args.get(0))) {
+                    yield args.get(0);
+                }
 
-            return applyFunction(function, args);
-
-        }
-        if(node instanceof ArrayLiteral) {
-            ArrayLiteral arrayLiteral = (ArrayLiteral) node;
-            var elements = evaluateExpressions(arrayLiteral.getElements(), env);
-            if(elements.size() == 1 && isError(elements.get(0))) {
-                return elements.get(0);
+                yield applyFunction(function, args);
             }
-            return new ArrayObject(elements);
-        }
-        if(node instanceof InfixExpression) {
-            InfixExpression infixExpression = (InfixExpression) node;
-            IObject left = evaluate(infixExpression.getLeft(), env);
-            if(isError(left)) {
-                return left;
+            case ArrayLiteral arrayLiteral -> {
+                var elements = evaluateExpressions(arrayLiteral.getElements(), env);
+                if(elements.size() == 1 && isError(elements.get(0))) {
+                    yield elements.get(0);
+                }
+                yield new ArrayObject(elements);
             }
-            IObject right = evaluate(infixExpression.getRight(), env);
-            if(isError(right)) {
-                return right;
+            case InfixExpression infixExpression -> {
+                IObject left = evaluate(infixExpression.getLeft(), env);
+                if(isError(left)) {
+                    yield left;
+                }
+                IObject right = evaluate(infixExpression.getRight(), env);
+                if(isError(right)) {
+                    yield right;
+                }
+                yield evaluateInfixExpression(infixExpression.getOperator(), left, right);
             }
-            return evaluateInfixExpression(infixExpression.getOperator(), left, right);
-        }
-        if(node instanceof FunctionLiteral) {
-            FunctionLiteral functionLiteral = (FunctionLiteral) node;
-            return new FunctionObject(functionLiteral.getParameters(), functionLiteral.getBody(), env);
-        }
-        if(node instanceof ReturnStatement) {
-            ReturnStatement returnStatement = (ReturnStatement) node;
-            IObject value = evaluate(returnStatement.getExpression(), env);
-            if(isError(value)) {
-                return value;
+            case FunctionLiteral functionLiteral -> {
+                yield new FunctionObject(functionLiteral.getParameters(), functionLiteral.getBody(), env);
             }
-            return new ReturnObject(value);
-        }
-        if(node instanceof IndexExpression) {
-            IndexExpression indexExpression = (IndexExpression) node;
-            var left = evaluate(indexExpression.getLeft(), env);
-            if(isError(left)) {
-                return left;
+            case ReturnStatement returnStatement -> {
+                IObject value = evaluate(returnStatement.getExpression(), env);
+                if(isError(value)) {
+                    yield value;
+                }
+                yield new ReturnObject(value);
             }
-            var index = evaluate(indexExpression.getIndex(), env);
-            if(isError(index)) {
-                return index;
+            case IndexExpression indexExpression -> {
+                var left = evaluate(indexExpression.getLeft(), env);
+                if(isError(left)) {
+                    yield left;
+                }
+                var index = evaluate(indexExpression.getIndex(), env);
+                if(isError(index)) {
+                    yield index;
+                }
+                yield evaluateIndexExpression(left, index);
             }
-            return evaluateIndexExpression(left, index);
-        }
-        if(node instanceof BlockStatement) {
-            return evaluateBlockStatement(((BlockStatement)node).getStatements(), env);
-        }
-        if(node instanceof IfExpression) {
-            return evaluateIfExpression(node, env);
-        }
-        if(node instanceof IntegerLiteral) {
-            return new IntegerObject(((IntegerLiteral) node).getValue());
-        }
-        if(node instanceof BooleanType) {
-            boolean value =  ((BooleanType)node).getValue();
-            if (value == true) {
-                return TRUE;
-            } else {
-                return FALSE;
+            case BlockStatement blockStatement -> {
+                yield evaluateBlockStatement(blockStatement.getStatements(), env);
             }
-        }
-        if(node instanceof ExpressionStatement) {
-            return evaluate(((ExpressionStatement)node).getExpression(), env);
-        }
-        if(node instanceof Program) {
-            return evaluateProgram(((Program)node).getStatements(), env);
-        }
-        return null;
+            case IfExpression ifExpression -> {
+                yield evaluateIfExpression(ifExpression, env);
+            }
+            case IntegerLiteral integerLiteral -> {
+                yield new IntegerObject(integerLiteral.getValue());
+            }
+            case BooleanType booleanType -> {
+                boolean value =  booleanType.getValue();
+                if (value == true) {
+                    yield TRUE;
+                } else {
+                    yield FALSE;
+                }
+            }
+            case ExpressionStatement expressionStatement -> {
+                yield evaluate(expressionStatement.getExpression(), env);
+            }
+            case Program program -> {
+                yield evaluateProgram(program.getStatements(), env);
+            }
+            //TODO: What is missing?
+            default -> null;
+        };
     }
 
     private static IObject evaluateHashLiteral(HashLiteral hashLiteral, Environment env) {
@@ -137,24 +129,24 @@ public class Evaluator {
             }
             pairs.put(key, value);
         }
+
         return new HashObject(pairs);
     }
 
     private static IObject evaluateIndexExpression(IObject left, IObject index) {
         if(left instanceof ArrayObject && index instanceof IntegerObject) {
-            return evaluateArrayIndexExpression(left, index);
+            return evaluateArrayIndexExpression((ArrayObject) left, index);
         }
         if(left instanceof HashObject) {
-            return evaluateHashExpression(left, index);
+            return evaluateHashExpression((HashObject) left, index);
         }
+
         return ErrorObject.indexOperatorNotSupported(left.type());
     }
 
-    private static IObject evaluateHashExpression(IObject left, IObject index) {
-        // TODO:  Is this a stupid thing to do here without a check? Perform before calling or add an `else` branch returning an error object
-        HashObject hashObject = (HashObject) left;
+    private static IObject evaluateHashExpression(HashObject left, IObject index) {
         if(index instanceof StringObject || index instanceof BooleanObject || index instanceof IntegerObject) {
-            var value =  hashObject.getPairs().get(index);
+            var value =  left.getPairs().get(index);
             if(value != null) {
                 return value;
             } else {
@@ -165,18 +157,17 @@ public class Evaluator {
         }
     }
 
-    private static IObject evaluateArrayIndexExpression(IObject array, IObject index) {
-        ArrayObject arrayObject = (ArrayObject) array;
+    private static IObject evaluateArrayIndexExpression(ArrayObject array, IObject index) {
         var indexValue = ((IntegerObject)index).getValue();
-        var max = arrayObject.getElementsLength() - 1;
+        var max = array.getElementsLength() - 1;
         if(indexValue < 0 || indexValue > max) {
             return NULL;
         }
-        return arrayObject.getElements().get(indexValue);
+
+        return array.getElements().get(indexValue);
     }
 
-    private static IObject evaluateIfExpression(INode node, Environment env) {
-        IfExpression ifExpression = (IfExpression) node;
+    private static IObject evaluateIfExpression(IfExpression ifExpression, Environment env) {
         var condition = evaluate(ifExpression.getCondition(), env);
         if(isError(condition)) {
             return condition;
@@ -198,6 +189,7 @@ public class Evaluator {
         } else if (object == FALSE) {
             return false;
         }
+
         return true;
     }
 
@@ -213,6 +205,7 @@ public class Evaluator {
                 return object;
             }
         }
+
         return object;
     }
 
@@ -224,6 +217,7 @@ public class Evaluator {
                 return object;
             }
         }
+
         return object;
     }
 
@@ -232,12 +226,10 @@ public class Evaluator {
             return ErrorObject.typeMismatchError("" + left.type() + " " + operator + " " + right.type());
         }
         if(left instanceof StringObject && right instanceof StringObject) {
-            var leftValue = (StringObject)left;
-            var rightValue = (StringObject)right;
-            return evaluateStringInfixExpression(operator, leftValue, rightValue);
+            return evaluateStringInfixExpression(operator, (StringObject) left, (StringObject) right);
         }
         if(left instanceof IntegerObject && right instanceof IntegerObject) {
-            return evaluateIntegerInfixExpression(operator, left, right);
+            return evaluateIntegerInfixExpression(operator, (IntegerObject) left, (IntegerObject) right);
         }
         if(left instanceof BooleanObject && right instanceof BooleanObject) {
             var leftValue = ((BooleanObject)left).getValue();
@@ -249,6 +241,7 @@ public class Evaluator {
                 return nativeBoolToBooleanObject(leftValue != rightValue);
             }
         }
+
         return ErrorObject.unknownOperatorError("" + left.type() + " " + operator + " " + right.type());
     }
 
@@ -256,12 +249,13 @@ public class Evaluator {
         if(!operator.equals("+")) {
             return ErrorObject.unknownOperatorError(left.type() + " " + operator + " " + right.type());
         }
+
         return new StringObject(left.getValue() + right.getValue());
     }
 
-    private static IObject evaluateIntegerInfixExpression(String operator, IObject left, IObject right) {
-        var leftValue = ((IntegerObject)left).getValue();
-        var rightValue = ((IntegerObject)right).getValue();
+    private static IObject evaluateIntegerInfixExpression(String operator, IntegerObject left, IntegerObject right) {
+        var leftValue = left.getValue();
+        var rightValue = right.getValue();
         switch(operator) {
             case "+":
                 return new IntegerObject(leftValue + rightValue);
@@ -291,6 +285,7 @@ public class Evaluator {
         if(operator.equals("-")) {
             return evaluateMinusPrefixOperatorExpression(right);
         }
+
         return ErrorObject.unknownOperatorError("" + operator + right.type());
     }
 
@@ -308,6 +303,7 @@ public class Evaluator {
                 return FALSE;
             }
         }
+
         return FALSE;
     }
 
@@ -318,6 +314,7 @@ public class Evaluator {
                 return new IntegerObject(-value);
             }
         }
+
         return ErrorObject.unknownOperatorError("-" + right.type());
     }
 
@@ -382,15 +379,15 @@ public class Evaluator {
         if(objects.size() != 2) {
             return ErrorObject.wrongNumberOfArguments(2, objects.size());
         }
-        if(objects.get(0) instanceof ArrayObject) {
+        if(objects.getFirst() instanceof ArrayObject) {
             ArrayObject arrayObject = (ArrayObject) objects.get(0);
-            List<IObject> newElements = new ArrayList<IObject>();
+            List<IObject> newElements = new ArrayList<>();
             newElements.addAll(arrayObject.getElements());
-            newElements.add(objects.get(1));
+            newElements.add(objects.getLast());
             return new ArrayObject(newElements);
         }
 
-        return ErrorObject.argumentToFirstMustBeArray(objects.get(0).type());
+        return ErrorObject.argumentToFirstMustBeArray(objects.getFirst().type());
     }
     public static IObject firstOfArray(List<IObject> objects) {
         if(objects.size() != 1) {
@@ -398,15 +395,15 @@ public class Evaluator {
         }
 
         if(objects.get(0) instanceof ArrayObject) {
-            ArrayObject arrayObject = (ArrayObject) objects.get(0);
+            ArrayObject arrayObject = (ArrayObject) objects.getFirst();
             if(arrayObject.getElementsLength() > 0) {
-                return arrayObject.getElements().get(0); // TODO: Update JAVA version to get getFirst
+                return arrayObject.getElements().getFirst();
             } else {
                 return NULL;
             }
         }
-        return ErrorObject.argumentToFirstMustBeArray(objects.get(0).type());
 
+        return ErrorObject.argumentToFirstMustBeArray(objects.getFirst().type());
     }
 
     public static IObject restOfArray(List<IObject> objects) {
@@ -415,11 +412,11 @@ public class Evaluator {
         }
 
         if(objects.get(0) instanceof ArrayObject) {
-            ArrayObject arrayObject = (ArrayObject) objects.get(0);
+            ArrayObject arrayObject = (ArrayObject) objects.getFirst();
             if(arrayObject.getElementsLength() == 0) {
                 return NULL;
             } else if(arrayObject.getElementsLength() == 1) {
-                List<IObject> elements = new ArrayList<IObject>();
+                List<IObject> elements = new ArrayList<>();
                 return new ArrayObject(elements);
 
             } else if(arrayObject.getElementsLength() > 1) {
@@ -428,7 +425,7 @@ public class Evaluator {
             }
         }
 
-        return ErrorObject.argumentToFirstMustBeArray(objects.get(0).type());
+        return ErrorObject.argumentToFirstMustBeArray(objects.getFirst().type());
     }
 
     public static IObject lastOfArray(List<IObject> objects) {
@@ -437,14 +434,15 @@ public class Evaluator {
         }
 
         if(objects.get(0) instanceof ArrayObject) {
-            ArrayObject arrayObject = (ArrayObject) objects.get(0);
+            ArrayObject arrayObject = (ArrayObject) objects.getFirst();
             if(arrayObject.getElementsLength() > 0) {
-                return arrayObject.getElements().get(arrayObject.getElementsLength() - 1); //TODO: Update JAVA to get getLast()
+                return arrayObject.getElements().getLast();
             } else {
                 return NULL;
             }
         }
-        return ErrorObject.argumentToFirstMustBeArray(objects.get(0).type());
+
+        return ErrorObject.argumentToFirstMustBeArray(objects.getFirst().type());
 
     }
 
@@ -452,19 +450,20 @@ public class Evaluator {
         if(objects.size() != 1) {
             return ErrorObject.wrongNumberOfArguments(1, objects.size());
         }
-        if(objects.get(0) instanceof StringObject) {
-            var value = ((StringObject)objects.get(0)).getValue();
+        if(objects.getFirst() instanceof StringObject) {
+            var value = ((StringObject)objects.getFirst()).getValue();
             return new IntegerObject(value.length());
         }
-        if(objects.get(0) instanceof ArrayObject) {
-            var length = ((ArrayObject)objects.get(0)).getElementsLength();
+        if(objects.getFirst() instanceof ArrayObject) {
+            var length = ((ArrayObject)objects.getFirst()).getElementsLength();
             return new IntegerObject(length);
         }
-        return ErrorObject.argumentNotSupported("len", objects.get(0).type());
+
+        return ErrorObject.argumentNotSupported("len", objects.getFirst().type());
     }
 
     private static List<IObject> evaluateExpressions(List<IExpression> expressions, Environment env) {
-        List<IObject> result = new ArrayList<IObject>();
+        List<IObject> result = new ArrayList<>();
         for(IExpression expression : expressions) {
             var evaluated = evaluate(expression, env);
             if(isError(evaluated)) {
@@ -472,6 +471,7 @@ public class Evaluator {
             }
             result.add(evaluated);
         }
+
         return result;
     }
 
@@ -487,9 +487,7 @@ public class Evaluator {
             return builtinFunctionObject.apply(arguments);
         }
 
-
         return ErrorObject.notAFunction(function.type());
-
     }
 
     private static Environment extendFunctionEnvironment(FunctionObject function, List<IObject> arguments) {
@@ -497,6 +495,7 @@ public class Evaluator {
         for(int i = 0; i < function.getParametersLength(); ++i) {
             env.set(function.getParameters().get(i).getValue(), arguments.get(i));
         }
+
         return env;
     }
 
@@ -505,6 +504,7 @@ public class Evaluator {
             ReturnObject returnObject = (ReturnObject) object;
             return returnObject.getValue();
         }
+
         return object;
     }
 

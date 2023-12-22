@@ -33,7 +33,6 @@ public class ArrayLiteral implements IExpression {
 
     @Override
     public String string() {
-
         String elementsString = elements.stream().map(p -> p.string()).collect(Collectors.joining(", "));
         StringBuilder sb = new StringBuilder();
         sb.append("[");
