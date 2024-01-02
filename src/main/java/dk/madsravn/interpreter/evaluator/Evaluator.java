@@ -20,6 +20,7 @@ public class Evaluator {
                 }
                 yield evaluatePrefixExpression(prefixExpression.getOperator(), right);
             }
+
             case LetStatement letStatement -> {
                 var value = evaluate(letStatement.getValue(), env);
                 if(isError(value)) {
@@ -28,15 +29,13 @@ public class Evaluator {
                 env.set(letStatement.getName().getValue(), value);
                 yield null;
             }
-            case Identifier identifier -> {
-                yield evaluateIdentifier(identifier, env);
-            }
-            case HashLiteral hashLiteral -> {
-                yield evaluateHashLiteral(hashLiteral, env);
-            }
-            case StringLiteral stringLiteral -> {
-                yield new StringObject(stringLiteral.getValue());
-            }
+
+            case Identifier identifier -> evaluateIdentifier(identifier, env);
+
+            case HashLiteral hashLiteral -> evaluateHashLiteral(hashLiteral, env);
+
+            case StringLiteral stringLiteral -> new StringObject(stringLiteral.getValue());
+
             case CallExpression callExpression -> {
                 var function = evaluate(callExpression.getFunction(), env);
                 if(isError(function)) {
@@ -49,6 +48,7 @@ public class Evaluator {
 
                 yield applyFunction(function, args);
             }
+
             case ArrayLiteral arrayLiteral -> {
                 var elements = evaluateExpressions(arrayLiteral.getElements(), env);
                 if(elements.size() == 1 && isError(elements.get(0))) {
@@ -56,6 +56,7 @@ public class Evaluator {
                 }
                 yield new ArrayObject(elements);
             }
+
             case InfixExpression infixExpression -> {
                 IObject left = evaluate(infixExpression.getLeft(), env);
                 if(isError(left)) {
@@ -67,9 +68,10 @@ public class Evaluator {
                 }
                 yield evaluateInfixExpression(infixExpression.getOperator(), left, right);
             }
-            case FunctionLiteral functionLiteral -> {
-                yield new FunctionObject(functionLiteral.getParameters(), functionLiteral.getBody(), env);
-            }
+
+            case FunctionLiteral functionLiteral ->
+                    new FunctionObject(functionLiteral.getParameters(), functionLiteral.getBody(), env);
+
             case ReturnStatement returnStatement -> {
                 IObject value = evaluate(returnStatement.getExpression(), env);
                 if(isError(value)) {
@@ -77,6 +79,7 @@ public class Evaluator {
                 }
                 yield new ReturnObject(value);
             }
+
             case IndexExpression indexExpression -> {
                 var left = evaluate(indexExpression.getLeft(), env);
                 if(isError(left)) {
@@ -88,15 +91,13 @@ public class Evaluator {
                 }
                 yield evaluateIndexExpression(left, index);
             }
-            case BlockStatement blockStatement -> {
-                yield evaluateBlockStatement(blockStatement.getStatements(), env);
-            }
-            case IfExpression ifExpression -> {
-                yield evaluateIfExpression(ifExpression, env);
-            }
-            case IntegerLiteral integerLiteral -> {
-                yield new IntegerObject(integerLiteral.getValue());
-            }
+
+            case BlockStatement blockStatement -> evaluateBlockStatement(blockStatement.getStatements(), env);
+
+            case IfExpression ifExpression -> evaluateIfExpression(ifExpression, env);
+
+            case IntegerLiteral integerLiteral -> new IntegerObject(integerLiteral.getValue());
+
             case BooleanType booleanType -> {
                 boolean value =  booleanType.getValue();
                 if (value == true) {
@@ -105,13 +106,12 @@ public class Evaluator {
                     yield FALSE;
                 }
             }
-            case ExpressionStatement expressionStatement -> {
-                yield evaluate(expressionStatement.getExpression(), env);
-            }
-            case Program program -> {
-                yield evaluateProgram(program.getStatements(), env);
-            }
-            //TODO: What is missing?
+
+            case ExpressionStatement expressionStatement -> evaluate(expressionStatement.getExpression(), env);
+
+            case Program program -> evaluateProgram(program.getStatements(), env);
+
+            //TODO: What is missing? Interfaces?
             default -> null;
         };
     }
